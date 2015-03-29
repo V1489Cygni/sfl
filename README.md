@@ -1,2 +1,2 @@
 # sfl
-Simple Functianal Language to Java compiler.
+Simple Functional Language to Java compiler.

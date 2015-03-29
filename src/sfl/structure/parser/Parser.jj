@@ -1,0 +1,114 @@
+PARSER_BEGIN(Parser)
+
+package sfl.structure.parser;
+
+import java.util.List;
+import java.util.ArrayList;
+
+import sfl.structure.code.*;
+import sfl.structure.code.expression.*;
+import sfl.structure.type.*;
+
+public class Parser {
+
+}
+
+PARSER_END(Parser)
+
+SKIP : {
+      " "
+    | "\t"
+    | "\n"
+    | "\r"
+}
+
+TOKEN : {
+      < INTEGER: ("" | "-")(["0"-"9"])+ >
+    | < BOOLEAN : "true" | "false" >
+    | <INT_TYPE : "Integer" >
+    | <BOOL_TYPE : "Bool" >
+    | < IDENTIFIER : (["a"-"z"] | ["A"-"Z"] | ".")+ >
+}
+
+List<Statement> Program() : {
+    Statement st;
+    List<Statement> res = new ArrayList();
+} {
+    (st = Statement() { res.add(st); })*
+    { return res; }
+}
+
+Statement Statement() : {
+    Identifier name;
+    Statement st;
+} {
+    name = Identifier() (st = Declaration(name) | st = Definition(name)) { return st; }
+}
+
+Declaration Declaration(Identifier name) : {
+    Type type;
+} {
+    "::" type = Type() { return new Declaration(name, type); }
+}
+
+Definition Definition(Identifier name) : {
+    Expression e;
+    List<Expression> arguments = new ArrayList();
+} {
+    (e = UnaryExpression() { arguments.add(e); })*
+    "=" e = UnaryExpression() { return new Definition(name, arguments, e); }
+}
+
+Expression Expression() : {
+    Expression e;
+    Expression res;
+} {
+    e = UnaryExpression() { res = e; }
+    (e = UnaryExpression() { res = new Application(res, e); })*
+    { return res; }
+}
+
+Expression UnaryExpression() : {
+    Expression e;
+} {
+    ("(" e = Expression() ")" | e = Integer() | e = Boolean() | e = Identifier()) { return e; }
+}
+
+Int Integer() : {
+    Token i;
+} {
+    i = <INTEGER> { return new Int(Integer.parseInt(i.image)); }
+}
+
+Bool Boolean() : {
+    Token b;
+} {
+    b = <BOOLEAN> { return new Bool(Boolean.parseBoolean(b.image)); }
+}
+
+Identifier Identifier() : {
+    Token id;
+} {
+    id = <IDENTIFIER> { return new Identifier(id.image); }
+}
+
+Type Type() : {
+    Type t;
+    Type res;
+} {
+    t = UnaryType() { res = t; }
+    ("->" t = UnaryType() { res = new Implication(res, t); })*
+    { return res; }
+}
+
+Type UnaryType() : {
+    Type t;
+} {
+    ("(" t = Type() ")" | t = BaseType()) { return t; }
+}
+
+Type BaseType() : {
+    Token t;
+} {
+    t = <INT_TYPE> { return BaseType.INTEGER; } | t = <BOOL_TYPE> { return BaseType.BOOLEAN; }
+}

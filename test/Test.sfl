@@ -1,0 +1,11 @@
+Sum :: Integer -> Integer -> Integer -> Integer
+Sum a b c = (Int.Add a (Int.Add b c))
+
+X :: (Integer -> Integer) -> Integer
+X f = (f 3)
+
+Y :: (Integer -> Integer -> Integer) -> Integer
+Y f = (X (f 5))
+
+Z :: Integer
+Z = (Y (Sum 20))
