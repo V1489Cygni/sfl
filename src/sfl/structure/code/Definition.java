@@ -24,7 +24,6 @@ public class Definition extends Statement {
         return value;
     }
 
-    @Override
     public Identifier getName() {
         return name;
     }

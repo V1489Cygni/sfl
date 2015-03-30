@@ -2,13 +2,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Int {
-    public static class Mul implements Function {
+    public static class mul implements Function {
         public List<Object> args = new ArrayList<>();
 
-        public Mul() {
+        public mul() {
         }
 
-        public Mul(Mul f) {
+        public mul(mul f) {
             for (Object o : f.args) {
                 args.add(o);
             }
@@ -17,7 +17,7 @@ public class Int {
         @Override
         public Object apply(Object o) {
             if (args.size() < 1) {
-                Mul mul = new Mul(this);
+                mul mul = new mul(this);
                 mul.args.add(o);
                 return mul;
             }
@@ -25,13 +25,13 @@ public class Int {
         }
     }
 
-    public static class Add implements Function {
+    public static class add implements Function {
         public List<Object> args = new ArrayList<>();
 
-        public Add() {
+        public add() {
         }
 
-        public Add(Add f) {
+        public add(add f) {
             for (Object o : f.args) {
                 args.add(o);
             }
@@ -40,7 +40,7 @@ public class Int {
         @Override
         public Object apply(Object o) {
             if (args.size() < 1) {
-                Add add = new Add(this);
+                add add = new add(this);
                 add.args.add(o);
                 return add;
             }

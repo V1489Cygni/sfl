@@ -16,7 +16,6 @@ public class Declaration extends Statement {
         return type;
     }
 
-    @Override
     public Identifier getName() {
         return name;
     }

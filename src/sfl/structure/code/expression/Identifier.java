@@ -1,5 +1,6 @@
 package sfl.structure.code.expression;
 
+import java.util.List;
 import java.util.Map;
 
 public class Identifier extends Expression {
@@ -16,6 +17,11 @@ public class Identifier extends Expression {
         } else {
             return "new " + value + "()";
         }
+    }
+
+    @Override
+    public void getConstraints(List<String> constraints, Map<Identifier, String> codes, String myCode) {
+        codes.put(this, myCode);
     }
 
     @Override

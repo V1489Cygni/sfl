@@ -1,3 +1,7 @@
+options {
+    LOOKAHEAD=2;
+}
+
 PARSER_BEGIN(Parser)
 
 package sfl.structure.parser;
@@ -27,7 +31,8 @@ TOKEN : {
     | < BOOLEAN : "true" | "false" >
     | <INT_TYPE : "Integer" >
     | <BOOL_TYPE : "Bool" >
-    | < IDENTIFIER : (["a"-"z"] | ["A"-"Z"] | ".")+ >
+    | < IDENTIFIER : ["a"-"z"](["a"-"z"] | ["A"-"Z"] | "_")* >
+    | < IDENTIFIER_UP : ["A"-"Z"](["a"-"z"] | ["A"-"Z"])* >
 }
 
 List<Statement> Program() : {
@@ -42,7 +47,8 @@ Statement Statement() : {
     Identifier name;
     Statement st;
 } {
-    name = Identifier() (st = Declaration(name) | st = Definition(name)) { return st; }
+    (name = Identifier("") (st = Declaration(name) | st = Definition(name)) { return st; })
+    | st = TypeDeclaration() { return st; }
 }
 
 Declaration Declaration(Identifier name) : {
@@ -70,8 +76,17 @@ Expression Expression() : {
 
 Expression UnaryExpression() : {
     Expression e;
+    String m = "";
 } {
-    ("(" e = Expression() ")" | e = Integer() | e = Boolean() | e = Identifier()) { return e; }
+    ("(" e = Expression() ")" | e = Integer() | e = Boolean() |
+    ((m = Module())? (e = Identifier(m) | e = TypeConstructor(m)))) { return e; }
+}
+
+String Module() : {
+    Token t;
+    String m = "";
+} {
+    (t = <IDENTIFIER_UP> "." { m += t.image + "."; })+ { return m; }
 }
 
 Int Integer() : {
@@ -86,10 +101,16 @@ Bool Boolean() : {
     b = <BOOLEAN> { return new Bool(Boolean.parseBoolean(b.image)); }
 }
 
-Identifier Identifier() : {
+Identifier Identifier(String m) : {
     Token id;
 } {
-    id = <IDENTIFIER> { return new Identifier(id.image); }
+    id = <IDENTIFIER> { return new Identifier(m + id.image); }
+}
+
+TypeConstructor TypeConstructor(String m) : {
+    Token ct;
+} {
+    ct = <IDENTIFIER_UP> { return new TypeConstructor(m + ct.image); }
 }
 
 Type Type() : {
@@ -103,12 +124,39 @@ Type Type() : {
 
 Type UnaryType() : {
     Type t;
+    String m = "";
 } {
-    ("(" t = Type() ")" | t = BaseType()) { return t; }
+    ("(" t = Type() ")" | t = BaseType() | (m = Module())? t = TypeIdentifier(m)) { return t; }
 }
 
 Type BaseType() : {
     Token t;
 } {
-    t = <INT_TYPE> { return BaseType.INTEGER; } | t = <BOOL_TYPE> { return BaseType.BOOLEAN; }
+    t = <INT_TYPE> { return BaseType.Integer; } | t = <BOOL_TYPE> { return BaseType.Boolean; }
+}
+
+Statement TypeDeclaration() : {
+    TypeIdentifier ti;
+    TypeConstructor t;
+    List<Type> tl;
+    List<TypeConstructor> cons = new ArrayList();
+    List<List<Type>> args = new ArrayList();
+} {
+    ti = TypeIdentifier("") "=" t = TypeConstructor("") { cons.add(t); } tl = Args() { args.add(tl); }
+    ("|" t = TypeConstructor("") { cons.add(t); } tl = Args() { args.add(tl); })*
+    { return new TypeDeclaration(ti, cons, args); }
+}
+
+TypeIdentifier TypeIdentifier(String m) : {
+    Token id;
+} {
+    id = <IDENTIFIER_UP> { return new TypeIdentifier(m + id.image); }
+}
+
+List<Type> Args() : {
+    List<Type> res = new ArrayList();
+    Type t;
+} {
+    (t = Type() { res.add(t); })*
+    { return res; }
 }

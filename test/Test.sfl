@@ -1,11 +1,16 @@
-Sum :: Integer -> Integer -> Integer -> Integer
-Sum a b c = (Int.Add a (Int.Add b c))
+List = Empty | Cons Integer List
 
-X :: (Integer -> Integer) -> Integer
-X f = (f 3)
+put :: Integer -> List -> List
+put a b = (Cons a b)
 
-Y :: (Integer -> Integer -> Integer) -> Integer
-Y f = (X (f 5))
+top :: List -> Integer
+top (Cons a b) = a
 
-Z :: Integer
-Z = (Y (Sum 20))
+next :: List -> List
+next (Cons a b) = b
+
+sum :: List -> Integer
+sum Empty = 0
+sum (Cons a b) = (Int.add a (sum b))
+
+main = (sum (put 5 (next (put 7 (put 3 Empty)))))

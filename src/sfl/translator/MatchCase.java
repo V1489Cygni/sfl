@@ -2,8 +2,8 @@ package sfl.translator;
 
 import sfl.structure.code.expression.Expression;
 import sfl.structure.code.expression.Identifier;
-import sfl.structure.code.expression.Int;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,22 +29,23 @@ public class MatchCase {
         }
     }
 
-    public String toString() {
-        String result = "\t\t\tif (true";
+    public String generate() throws TranslationException {
+        String result = "            if (true";
         Map<Identifier, String> args = new HashMap<>();
+        List<String> constraints = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
-            Expression arg = arguments.get(i);
-            if (arg instanceof Int) {
-                result += " && ((int) " + getArgName(i) + ") == " + ((Int) arg).getValue();
-            } else if (arg instanceof Identifier) {
-                args.put((Identifier) arg, getArgName(i));
-            } else {
-                throw new AssertionError();
-            }
+            arguments.get(i).getConstraints(constraints, args, getArgName(i));
+        }
+        for (String s : constraints) {
+            result += " && " + s;
         }
         result += ") {\n" +
-                "\t\t\t\treturn " + value.generateCode(args) + ";\n" +
-                "\t\t\t}\n";
+                "                return " + value.generateCode(args) + ";\n" +
+                "            }\n";
         return result;
+    }
+
+    public Expression getValue() {
+        return value;
     }
 }
