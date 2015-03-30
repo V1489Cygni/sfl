@@ -29,8 +29,10 @@ SKIP : {
 TOKEN : {
       < INTEGER: ("" | "-")(["0"-"9"])+ >
     | < BOOLEAN : "true" | "false" >
-    | <INT_TYPE : "Integer" >
-    | <BOOL_TYPE : "Bool" >
+    | < INT_TYPE : "Integer" >
+    | < BOOL_TYPE : "Bool" >
+    | < MODULE : "module" >
+    | < IMPORT : "import" >
     | < IDENTIFIER : ["a"-"z"](["a"-"z"] | ["A"-"Z"] | "_")* >
     | < IDENTIFIER_UP : ["A"-"Z"](["a"-"z"] | ["A"-"Z"])* >
 }
@@ -39,8 +41,24 @@ List<Statement> Program() : {
     Statement st;
     List<Statement> res = new ArrayList();
 } {
+    st = Header() { res.add(st); }
     (st = Statement() { res.add(st); })*
     { return res; }
+}
+
+Header Header() : {
+    String m, t;
+    List<String> im = new ArrayList();
+} {
+    <MODULE> m = FullName() (<IMPORT> t = FullName() { im.add(t); })* { return new Header(m, im); }
+}
+
+String FullName() : {
+    String name;
+    Token t;
+} {
+    t = <IDENTIFIER_UP> { name = t.image; }
+    ("." t = <IDENTIFIER_UP> { name += "." + t.image; })* { return name; }
 }
 
 Statement Statement() : {
@@ -89,10 +107,10 @@ String Module() : {
     (t = <IDENTIFIER_UP> "." { m += t.image + "."; })+ { return m; }
 }
 
-Int Integer() : {
+Data.Int Integer() : {
     Token i;
 } {
-    i = <INTEGER> { return new Int(Integer.parseInt(i.image)); }
+    i = <INTEGER> { return new Data.Int(Integer.parseInt(i.image)); }
 }
 
 Bool Boolean() : {

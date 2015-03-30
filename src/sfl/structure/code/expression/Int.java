@@ -10,10 +10,6 @@ public class Int extends BaseExpression {
         this.value = value;
     }
 
-    public int getValue() {
-        return value;
-    }
-
     @Override
     public String generateCode(Map<Identifier, String> ids) {
         return Integer.toString(value);

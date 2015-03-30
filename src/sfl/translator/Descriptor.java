@@ -57,16 +57,14 @@ public class Descriptor {
         if (argsNumber == 0) {
             return "    public static Object " + name + " = " + cases.get(0).getValue().generateCode(new HashMap<>()) + ";\n";
         }
-        String result = "    public static class " + name + " implements Function {\n" +
+        return "    public static class " + name + " implements Function {\n" +
                 "        public List<Object> args = new ArrayList<>();\n" +
                 "\n" +
                 "        public " + name + "() {\n" +
                 "        }\n" +
                 "\n" +
                 "        public " + name + "(" + name + " f) {\n" +
-                "            for (Object o : f.args) {\n" +
-                "                args.add(o);\n" +
-                "            }\n" +
+                "            args.addAll(f.args.stream().collect(Collectors.toList()));\n" +
                 "        }\n" +
                 "\n" +
                 "        @Override\n" +
@@ -74,6 +72,9 @@ public class Descriptor {
                 generateCode() +
                 "        }\n" +
                 "    }\n";
-        return result;
+    }
+
+    public int getArgsNumber() {
+        return argsNumber;
     }
 }

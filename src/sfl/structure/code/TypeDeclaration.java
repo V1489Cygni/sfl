@@ -32,9 +32,7 @@ public class TypeDeclaration extends Statement {
                     "        }\n" +
                     "\n" +
                     "        public " + constructor + "(" + constructor + " f) {\n" +
-                    "            for (Object o : f.args) {\n" +
-                    "                args.add(o);\n" +
-                    "            }\n" +
+                    "            args.addAll(f.args.stream().collect(Collectors.toList()));\n" +
                     "        }\n" +
                     "\n" +
                     "        @Override\n" +

@@ -1,5 +1,10 @@
+package Data;
+
+import util.Function;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Int {
     public static class mul implements Function {
@@ -9,9 +14,7 @@ public class Int {
         }
 
         public mul(mul f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override
@@ -32,9 +35,7 @@ public class Int {
         }
 
         public add(add f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override

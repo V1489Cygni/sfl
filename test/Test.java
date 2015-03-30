@@ -1,5 +1,11 @@
+/*Auto-generated code.*/
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import util.Function;
+
+import static Data.Int.*;
 
 public class Test {
     public static class next implements Function {
@@ -9,9 +15,7 @@ public class Test {
         }
 
         public next(next f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override
@@ -35,9 +39,7 @@ public class Test {
         }
 
         public top(top f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override
@@ -61,9 +63,7 @@ public class Test {
         }
 
         public sum(sum f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override
@@ -77,7 +77,7 @@ public class Test {
                 return 0;
             }
             if (true && o instanceof Cons) {
-                return ((Function) ((Function) new Int.add()).apply(((Cons) o).args.get(0))).apply(((Function) new sum()).apply(((Cons) o).args.get(1)));
+                return ((Function) ((Function) new add()).apply(((Cons) o).args.get(0))).apply(((Function) new sum()).apply(((Cons) o).args.get(1)));
             }
             throw new AssertionError();
         }
@@ -92,9 +92,7 @@ public class Test {
         }
 
         public put(put f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override
@@ -118,9 +116,7 @@ public class Test {
         }
 
         public Empty(Empty f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override
@@ -137,9 +133,7 @@ public class Test {
         }
 
         public Cons(Cons f) {
-            for (Object o : f.args) {
-                args.add(o);
-            }
+            args.addAll(f.args.stream().collect(Collectors.toList()));
         }
 
         @Override
@@ -148,5 +142,9 @@ public class Test {
             f.args.add(o);
             return f;
         }
+    }
+
+    public static void main(String[] args) {
+        System.out.println(main);
     }
 }
