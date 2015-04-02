@@ -1,12 +1,18 @@
 package sfl.structure.code.expression;
 
+import sfl.structure.type.Type;
+import sfl.translator.ProcessedProgram;
 import sfl.translator.TranslationException;
 
 import java.util.List;
 import java.util.Map;
 
-public abstract class Expression {
-    public abstract String generateCode(Map<Identifier, String> ids);
+public interface Expression {
+    Expression process();
 
-    public abstract void getConstraints(List<String> constraints, Map<Identifier, String> codes, String myCode) throws TranslationException;
+    Type getType(Map<Identifier, Type> context, ProcessedProgram program) throws TranslationException;
+
+    void getContext(List<String> constraints, Map<Identifier, String> codes, Map<Identifier, Type> context, String myCode, ProcessedProgram program, Type myType) throws TranslationException;
+
+    String generate(Map<Identifier, String> codes, Map<Identifier, Type> context, ProcessedProgram program) throws TranslationException;
 }

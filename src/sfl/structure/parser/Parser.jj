@@ -1,7 +1,3 @@
-options {
-    LOOKAHEAD=2;
-}
-
 PARSER_BEGIN(Parser)
 
 package sfl.structure.parser;
@@ -9,6 +5,7 @@ package sfl.structure.parser;
 import java.util.List;
 import java.util.ArrayList;
 
+import sfl.structure.*;
 import sfl.structure.code.*;
 import sfl.structure.code.expression.*;
 import sfl.structure.type.*;
@@ -19,162 +16,198 @@ public class Parser {
 
 PARSER_END(Parser)
 
-SKIP : {
-      " "
-    | "\t"
-    | "\n"
-    | "\r"
-}
-
 TOKEN : {
-      < INTEGER: ("" | "-")(["0"-"9"])+ >
+      < INTEGER: ("-")?(["0"-"9"])+ >
     | < BOOLEAN : "true" | "false" >
-    | < INT_TYPE : "Integer" >
+    | < CHAR : "'"~["'"]"'" >
+    | < STR : "\""(~["\""])*"\"" >
+    | < INT_TYPE : "Int" >
     | < BOOL_TYPE : "Bool" >
+    | < STR_TYPE : "String" >
+    | < CHR_TYPE : "Char" >
     | < MODULE : "module" >
     | < IMPORT : "import" >
+    | < DATA : "data" >
+    | < CL : "\\"(" " | "\t")*("\r\n" | "\n") >
+    | < NL : ("\r\n" | "\n")+ >
     | < IDENTIFIER : ["a"-"z"](["a"-"z"] | ["A"-"Z"] | "_")* >
     | < IDENTIFIER_UP : ["A"-"Z"](["a"-"z"] | ["A"-"Z"])* >
 }
 
-List<Statement> Program() : {
-    Statement st;
-    List<Statement> res = new ArrayList();
-} {
-    st = Header() { res.add(st); }
-    (st = Statement() { res.add(st); })*
-    { return res; }
+SKIP : {
+      " "
+    | "\t"
 }
 
-Header Header() : {
-    String m, t;
-    List<String> im = new ArrayList();
+Program Program() : {
+    Module module;
+    List<Module> imports = new ArrayList();
+    Module cur;
+    List<Statement> program;
 } {
-    <MODULE> m = FullName() (<IMPORT> t = FullName() { im.add(t); })* { return new Header(m, im); }
+    <MODULE> module = Module() <NL> (<IMPORT> cur = Module() <NL> { imports.add(cur); })*
+    program = Statements() <EOF> { return new Program(module, imports, program); }
 }
 
-String FullName() : {
-    String name;
+Module Module() : {
+    List<String> qualifiers = new ArrayList();
+    String cur;
     Token t;
 } {
-    t = <IDENTIFIER_UP> { name = t.image; }
-    ("." t = <IDENTIFIER_UP> { name += "." + t.image; })* { return name; }
+    t = <IDENTIFIER_UP> { cur = t.image; }
+    ("." t = <IDENTIFIER_UP> { qualifiers.add(cur); cur = t.image; })*
+    { return new Module(new Qualifier(qualifiers), cur); }
+}
+
+TypeIdentifier TypeIdentifier() : {
+    List<String> qualifiers = new ArrayList();
+    String cur;
+    Token t;
+} {
+    t = <IDENTIFIER_UP> { cur = t.image; }
+    ("." t = <IDENTIFIER_UP> { qualifiers.add(cur); cur = t.image; })*
+    { return new TypeIdentifier(new Module(new Qualifier(qualifiers)), cur); }
+}
+
+Identifier Identifier() : {
+    List<String> qualifiers = new ArrayList();
+    Token t;
+} {
+    (t = <IDENTIFIER_UP> "." { qualifiers.add(t.image); })* t = <IDENTIFIER> { return new Identifier(new Module(new Qualifier(qualifiers)), t.image); }
+}
+
+Constructor Constructor() : {
+    List<String> qualifiers = new ArrayList();
+    String cur;
+    Token t;
+} {
+    t = <IDENTIFIER_UP> { cur = t.image; }
+    ("." t = <IDENTIFIER_UP> { qualifiers.add(cur); cur = t.image; })*
+    { return new Constructor(new Module(new Qualifier(qualifiers)), cur); }
+}
+
+List<Statement> Statements() : {
+    List<Statement> statements = new ArrayList();
+    Statement cur;
+} {
+    (cur = Statement() { statements.add(cur); })* { return statements; }
 }
 
 Statement Statement() : {
-    Identifier name;
     Statement st;
+    Identifier identifier;
 } {
-    (name = Identifier("") (st = Declaration(name) | st = Definition(name)) { return st; })
-    | st = TypeDeclaration() { return st; }
+    (st = TypeDeclaration() | (identifier = Identifier() (st = Declaration(identifier) | st = Definition(identifier))))
+    { return st; }
+}
+
+TypeDeclaration TypeDeclaration() : {
+    TypeIdentifier identifier;
+    List<Constructor> constructors = new ArrayList();
+    Constructor constructor;
+    List<List<Type>> argsTypes = new ArrayList();
+    List<Type> cur;
+    Type type;
+} {
+    <DATA> identifier = TypeIdentifier() "=" constructor = Constructor() { constructors.add(constructor); cur = new ArrayList(); }
+    (type = Type() { cur.add(type); })* { argsTypes.add(cur); }
+    ("|" constructor = Constructor() { constructors.add(constructor); cur = new ArrayList(); }
+    (type = Type() { cur.add(type); })* { argsTypes.add(cur); })* <NL>
+    { return new TypeDeclaration(identifier, constructors, argsTypes); }
 }
 
 Declaration Declaration(Identifier name) : {
     Type type;
 } {
-    "::" type = Type() { return new Declaration(name, type); }
-}
-
-Definition Definition(Identifier name) : {
-    Expression e;
-    List<Expression> arguments = new ArrayList();
-} {
-    (e = UnaryExpression() { arguments.add(e); })*
-    "=" e = UnaryExpression() { return new Definition(name, arguments, e); }
-}
-
-Expression Expression() : {
-    Expression e;
-    Expression res;
-} {
-    e = UnaryExpression() { res = e; }
-    (e = UnaryExpression() { res = new Application(res, e); })*
-    { return res; }
-}
-
-Expression UnaryExpression() : {
-    Expression e;
-    String m = "";
-} {
-    ("(" e = Expression() ")" | e = Integer() | e = Boolean() |
-    ((m = Module())? (e = Identifier(m) | e = TypeConstructor(m)))) { return e; }
-}
-
-String Module() : {
-    Token t;
-    String m = "";
-} {
-    (t = <IDENTIFIER_UP> "." { m += t.image + "."; })+ { return m; }
-}
-
-Data.Int Integer() : {
-    Token i;
-} {
-    i = <INTEGER> { return new Data.Int(Integer.parseInt(i.image)); }
-}
-
-Bool Boolean() : {
-    Token b;
-} {
-    b = <BOOLEAN> { return new Bool(Boolean.parseBoolean(b.image)); }
-}
-
-Identifier Identifier(String m) : {
-    Token id;
-} {
-    id = <IDENTIFIER> { return new Identifier(m + id.image); }
-}
-
-TypeConstructor TypeConstructor(String m) : {
-    Token ct;
-} {
-    ct = <IDENTIFIER_UP> { return new TypeConstructor(m + ct.image); }
+    "::" type = Type() <NL> { return new Declaration(name, type); }
 }
 
 Type Type() : {
+    List<Type> arguments = new ArrayList();
     Type t;
-    Type res;
 } {
-    t = UnaryType() { res = t; }
-    ("->" t = UnaryType() { res = new Implication(res, t); })*
-    { return res; }
+    t = UnaryType() { arguments.add(t); } ("->" t = UnaryType() { arguments.add(t); })* { return new Implication(arguments); }
 }
 
 Type UnaryType() : {
     Type t;
-    String m = "";
 } {
-    ("(" t = Type() ")" | t = BaseType() | (m = Module())? t = TypeIdentifier(m)) { return t; }
+    ("(" t = Type() ")" | t = BaseType() | t = TypeIdentifier()) { return t; }
 }
 
 Type BaseType() : {
     Token t;
 } {
     t = <INT_TYPE> { return BaseType.Integer; } | t = <BOOL_TYPE> { return BaseType.Boolean; }
+    | t = <STR_TYPE> { return BaseType.String; } | t = <CHR_TYPE> { return BaseType.Character; }
 }
 
-Statement TypeDeclaration() : {
-    TypeIdentifier ti;
-    TypeConstructor t;
-    List<Type> tl;
-    List<TypeConstructor> cons = new ArrayList();
-    List<List<Type>> args = new ArrayList();
+Definition Definition(Identifier name) : {
+    List<Expression> args = new ArrayList();
+    Expression value, e;
 } {
-    ti = TypeIdentifier("") "=" t = TypeConstructor("") { cons.add(t); } tl = Args() { args.add(tl); }
-    ("|" t = TypeConstructor("") { cons.add(t); } tl = Args() { args.add(tl); })*
-    { return new TypeDeclaration(ti, cons, args); }
+    (e = UnaryExpression() { args.add(e); })* "=" value = Expression() <NL> { return new Definition(name, args, value); }
 }
 
-TypeIdentifier TypeIdentifier(String m) : {
-    Token id;
+Expression Expression() : {
+    List<Expression> args = new ArrayList();
+    Expression e;
 } {
-    id = <IDENTIFIER_UP> { return new TypeIdentifier(m + id.image); }
+    (e = UnaryExpression() (<CL>)? { args.add(e); })+ { return new Application(args); }
 }
 
-List<Type> Args() : {
-    List<Type> res = new ArrayList();
-    Type t;
+Expression UnaryExpression() : {
+    Expression e;
 } {
-    (t = Type() { res.add(t); })*
-    { return res; }
+    ("(" e = Expression() ")" | e = BaseExpression() | e = EC()) { return e; }
+}
+
+Expression EC() : {
+    List<String> qualifiers = new ArrayList();
+    String cur = null;
+    Token t;
+} {
+    (t = <IDENTIFIER_UP> { cur = t.image; } | t = <IDENTIFIER> { return new Identifier(new Module(new Qualifier(qualifiers)), t.image); })
+    ("."((t = <IDENTIFIER_UP> { qualifiers.add(cur); cur = t.image; }) | (t = <IDENTIFIER>
+    { qualifiers.add(cur); return new Identifier(new Module(new Qualifier(qualifiers)), t.image); })))*
+    { return new Constructor(new Module(new Qualifier(qualifiers)), cur); }
+}
+
+Expression BaseExpression() : {
+    Expression e;
+} {
+    (e = Int() | e = Bool() | e = Char() | e = Str() | e = Special()) { return e; }
+}
+
+Int Int() : {
+    Token t;
+} {
+    t = <INTEGER> { return new Int(Integer.parseInt(t.image)); }
+}
+
+Bool Bool() : {
+    Token t;
+} {
+    t = <BOOLEAN> { return new Bool(Boolean.parseBoolean(t.image)); }
+}
+
+Char Char() : {
+    Token t;
+} {
+    t = <CHAR> { return new Char(t.image.charAt(1)); }
+}
+
+Str Str() : {
+    Token t;
+} {
+    t = <STR> { return new Str(t.image.substring(1, t.image.length() - 1)); }
+}
+
+Special Special() : {
+} {
+    "+" { return Special.Add; } | "-" { return Special.Sub; } | "*" { return Special.Mul; }
+    | "/" { return Special.Div; } | "%" { return Special.Mod; } | "==" { return Special.Eq; }
+    | ">" { return Special.Gr; } | "<" { return Special.Ls; } | ">=" { return Special.Gre; }
+    | "<=" { return Special.Lse; } | "&" { return Special.And; } | "|" { return Special.Or; }
+    | "!" { return Special.Not; } | "!!" { return Special.At; }
 }

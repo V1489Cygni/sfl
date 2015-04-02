@@ -1,24 +1,33 @@
 package sfl.structure.type;
 
-public class TypeIdentifier implements Type {
-    private String name;
+import sfl.structure.code.Module;
 
-    public TypeIdentifier(String name) {
-        this.name = name;
+public class TypeIdentifier implements Type {
+    private Module module;
+    private String value;
+
+    public TypeIdentifier(Module module, String value) {
+        this.module = module;
+        this.value = value;
+    }
+
+    @Override
+    public Type process() {
+        return this;
     }
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof TypeIdentifier && name.equals(((TypeIdentifier) o).name);
+        return o instanceof TypeIdentifier && value.equals(((TypeIdentifier) o).value);
     }
 
     @Override
     public int hashCode() {
-        return name.hashCode();
+        return value.hashCode();
     }
 
     @Override
     public String toString() {
-        return name;
+        return value;
     }
 }

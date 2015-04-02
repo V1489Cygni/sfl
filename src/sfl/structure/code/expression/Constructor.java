@@ -9,11 +9,11 @@ import sfl.translator.TranslationException;
 import java.util.List;
 import java.util.Map;
 
-public class Identifier implements Expression {
+public class Constructor implements Expression {
     private Module module;
     private String value;
 
-    public Identifier(Module module, String value) {
+    public Constructor(Module module, String value) {
         this.module = module;
         this.value = value;
     }
@@ -29,29 +29,23 @@ public class Identifier implements Expression {
 
     @Override
     public Type getType(Map<Identifier, Type> context, ProcessedProgram program) throws TranslationException {
-        if (context.containsKey(this)) {
-            return context.get(this);
-        }
-        return Main.loadDescriptor(this, program).getType();
+        return Main.loadDescriptor(this, program).getType(this);
     }
 
     @Override
     public void getContext(List<String> constraints, Map<Identifier, String> codes, Map<Identifier, Type> context, String myCode, ProcessedProgram program, Type myType) throws TranslationException {
-        codes.put(this, myCode);
-        context.put(this, myType);
+        constraints.add(myCode + " instanceof " + value);
     }
 
     @Override
     public String generate(Map<Identifier, String> codes, Map<Identifier, Type> context, ProcessedProgram program) {
-        if (codes.containsKey(this)) {
-            return codes.get(this);
-        }
         return "new " + this + "()";
+
     }
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof Identifier && value.equals(((Identifier) o).value);
+        return o instanceof Constructor && value.equals(((Constructor) o).value);
     }
 
     @Override

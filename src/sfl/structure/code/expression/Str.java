@@ -8,10 +8,10 @@ import sfl.translator.TranslationException;
 import java.util.List;
 import java.util.Map;
 
-public class Bool implements Expression {
-    private boolean value;
+public class Str implements Expression {
+    private String value;
 
-    public Bool(boolean value) {
+    public Str(String value) {
         this.value = value;
     }
 
@@ -22,24 +22,24 @@ public class Bool implements Expression {
 
     @Override
     public Type getType(Map<Identifier, Type> context, ProcessedProgram program) {
-        return BaseType.Boolean;
+        return BaseType.String;
     }
 
     @Override
     public void getContext(List<String> constraints, Map<Identifier, String> codes, Map<Identifier, Type> context, String myCode, ProcessedProgram program, Type myType) throws TranslationException {
-        if (!myType.equals(BaseType.Boolean)) {
+        if (!myType.equals(BaseType.String)) {
             throw new TranslationException("Wrong type");
         }
-        constraints.add("((bool) " + myCode + ") == " + value);
+        constraints.add("((String) " + myCode + ").equals(" + value + ")");
     }
 
     @Override
     public String generate(Map<Identifier, String> codes, Map<Identifier, Type> context, ProcessedProgram program) {
-        return Boolean.toString(value);
+        return "\"" + value + "\"";
     }
 
     @Override
     public String toString() {
-        return Boolean.toString(value);
+        return "\"" + value + "\"";
     }
 }

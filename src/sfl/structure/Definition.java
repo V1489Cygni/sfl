@@ -1,11 +1,11 @@
-package sfl.structure.code;
+package sfl.structure;
 
 import sfl.structure.code.expression.Expression;
 import sfl.structure.code.expression.Identifier;
 
 import java.util.List;
 
-public class Definition extends Statement {
+public class Definition implements Statement {
     private Identifier name;
     private List<Expression> arguments;
     private Expression value;
@@ -16,16 +16,16 @@ public class Definition extends Statement {
         this.value = value;
     }
 
+    public Identifier getName() {
+        return name;
+    }
+
     public List<Expression> getArguments() {
         return arguments;
     }
 
     public Expression getValue() {
         return value;
-    }
-
-    public Identifier getName() {
-        return name;
     }
 
     @Override

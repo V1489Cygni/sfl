@@ -1,20 +1,19 @@
 module Test
 
-import Data.Int
+data List = Empty | Cons Int List
 
-List = Empty | Cons Integer List
+put :: Int -> List -> List
+put a b = Cons a b
 
-put :: Integer -> List -> List
-put a b = (Cons a b)
-
-top :: List -> Integer
+top :: List -> Int
 top (Cons a b) = a
 
-next :: List -> List
-next (Cons a b) = b
+get :: List -> Int -> Int
+get (Cons a b) 0 = a
+get (Cons a b) n = get b (- n 1)
 
-sum :: List -> Integer
-sum Empty = 0
-sum (Cons a b) = (add a (sum b))
+remove :: List -> List
+remove (Cons a b) = b
 
-main = (sum (put 5 (next (put 7 (put 3 Empty)))))
+main :: Int
+main = get (put 3 (remove (put 2 (put 7 (put 1 Empty))))) 1
