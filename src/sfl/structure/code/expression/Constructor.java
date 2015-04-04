@@ -4,22 +4,20 @@ import sfl.Main;
 import sfl.structure.code.Module;
 import sfl.structure.type.Type;
 import sfl.translator.ProcessedProgram;
+import sfl.translator.Searchable;
 import sfl.translator.TranslationException;
+import sfl.translator.TypeDescriptor;
 
 import java.util.List;
 import java.util.Map;
 
-public class Constructor implements Expression {
+public class Constructor implements Expression, Searchable {
     private Module module;
     private String value;
 
     public Constructor(Module module, String value) {
         this.module = module;
         this.value = value;
-    }
-
-    public Module getModule() {
-        return module;
     }
 
     @Override
@@ -29,7 +27,7 @@ public class Constructor implements Expression {
 
     @Override
     public Type getType(Map<Identifier, Type> context, ProcessedProgram program) throws TranslationException {
-        return Main.loadDescriptor(this, program).getType(this);
+        return ((TypeDescriptor) Main.loadDescriptor(this, program)).getType(this);
     }
 
     @Override
@@ -40,7 +38,11 @@ public class Constructor implements Expression {
     @Override
     public String generate(Map<Identifier, String> codes, Map<Identifier, Type> context, ProcessedProgram program) {
         return "new " + this + "()";
+    }
 
+    @Override
+    public Module getModule() {
+        return module;
     }
 
     @Override
@@ -55,6 +57,6 @@ public class Constructor implements Expression {
 
     @Override
     public String toString() {
-        return module + (module.isEmpty() ? "" : ".") + value;
+        return (module.isEmpty() ? "" : module.getClassName() + ".") + value;
     }
 }

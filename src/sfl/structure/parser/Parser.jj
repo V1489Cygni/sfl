@@ -1,3 +1,8 @@
+options {
+    STATIC = false;
+    LOOKAHEAD = 2;
+}
+
 PARSER_BEGIN(Parser)
 
 package sfl.structure.parser;
@@ -21,14 +26,13 @@ TOKEN : {
     | < BOOLEAN : "true" | "false" >
     | < CHAR : "'"~["'"]"'" >
     | < STR : "\""(~["\""])*"\"" >
-    | < INT_TYPE : "Int" >
-    | < BOOL_TYPE : "Bool" >
+    | < INT_TYPE : "Integer" >
+    | < BOOL_TYPE : "Boolean" >
     | < STR_TYPE : "String" >
-    | < CHR_TYPE : "Char" >
+    | < CHR_TYPE : "Character" >
     | < MODULE : "module" >
     | < IMPORT : "import" >
     | < DATA : "data" >
-    | < CL : "\\"(" " | "\t")*("\r\n" | "\n") >
     | < NL : ("\r\n" | "\n")+ >
     | < IDENTIFIER : ["a"-"z"](["a"-"z"] | ["A"-"Z"] | "_")* >
     | < IDENTIFIER_UP : ["A"-"Z"](["a"-"z"] | ["A"-"Z"])* >
@@ -37,6 +41,11 @@ TOKEN : {
 SKIP : {
       " "
     | "\t"
+}
+
+void consumeNL() : {
+} {
+    <NL> | <EOF> | <NL> <EOF>
 }
 
 Program Program() : {
@@ -112,14 +121,14 @@ TypeDeclaration TypeDeclaration() : {
     <DATA> identifier = TypeIdentifier() "=" constructor = Constructor() { constructors.add(constructor); cur = new ArrayList(); }
     (type = Type() { cur.add(type); })* { argsTypes.add(cur); }
     ("|" constructor = Constructor() { constructors.add(constructor); cur = new ArrayList(); }
-    (type = Type() { cur.add(type); })* { argsTypes.add(cur); })* <NL>
+    (type = Type() { cur.add(type); })* { argsTypes.add(cur); })* consumeNL()
     { return new TypeDeclaration(identifier, constructors, argsTypes); }
 }
 
 Declaration Declaration(Identifier name) : {
     Type type;
 } {
-    "::" type = Type() <NL> { return new Declaration(name, type); }
+    "::" type = Type() consumeNL() { return new Declaration(name, type); }
 }
 
 Type Type() : {
@@ -146,14 +155,14 @@ Definition Definition(Identifier name) : {
     List<Expression> args = new ArrayList();
     Expression value, e;
 } {
-    (e = UnaryExpression() { args.add(e); })* "=" value = Expression() <NL> { return new Definition(name, args, value); }
+    (e = UnaryExpression() { args.add(e); })* "=" value = Expression() consumeNL() { return new Definition(name, args, value); }
 }
 
 Expression Expression() : {
     List<Expression> args = new ArrayList();
     Expression e;
 } {
-    (e = UnaryExpression() (<CL>)? { args.add(e); })+ { return new Application(args); }
+    (e = UnaryExpression() { args.add(e); })+ { return new Application(args); }
 }
 
 Expression UnaryExpression() : {

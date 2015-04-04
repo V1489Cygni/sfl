@@ -1,14 +1,10 @@
 package sfl;
 
 import sfl.structure.code.Module;
-import sfl.structure.code.expression.Constructor;
-import sfl.structure.code.expression.Identifier;
 import sfl.structure.parser.ParseException;
 import sfl.structure.parser.Parser;
-import sfl.translator.Descriptor;
-import sfl.translator.ProcessedProgram;
-import sfl.translator.TranslationException;
-import sfl.translator.TypeDescriptor;
+import sfl.structure.type.TypeIdentifier;
+import sfl.translator.*;
 
 import java.io.*;
 import java.util.HashMap;
@@ -17,7 +13,7 @@ import java.util.Map;
 public class Main {
     private static Map<File, ProcessedProgram> loaded = new HashMap<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws TranslationException {
         for (String fileName : args) {
             try {
                 if (fileName.length() < 5 || !fileName.substring(fileName.length() - 4).equals(".sfl")) {
@@ -28,97 +24,77 @@ public class Main {
                 writer.write(loadProgram(new File(fileName)).generate());
                 writer.flush();
                 writer.close();
-            } catch (ParseException | TranslationException | IOException e) {
+            } catch (ParseException | IOException e) {
                 System.err.println("Error while processing file " + fileName + ": " + e.getMessage());
             }
         }
     }
 
-    public static ProcessedProgram loadProgram(File file) throws FileNotFoundException, ParseException, TranslationException {
+    public static Module findModule(TypeIdentifier identifier, ProcessedProgram program) throws TranslationException {
+        Map<TypeIdentifier, TypeDescriptor> types = program.getTypes();
+        for (TypeIdentifier id : types.keySet()) {
+            if (id.valueEquals(identifier)) {
+                return program.getModule();
+            }
+        }
+        File file = program.getModule().remove(program.getFile());
+        for (Module m : program.getImports()) {
+            try {
+                ProcessedProgram p = loadProgram(m.append(file));
+                types = p.getTypes();
+                for (TypeIdentifier id : types.keySet()) {
+                    if (id.valueEquals(identifier)) {
+                        return p.getModule();
+                    }
+                }
+            } catch (ParseException | TranslationException | IOException e) {
+                throw new TranslationException("Error while loading module " + m + ": " + e.getMessage());
+            }
+        }
+        throw new TranslationException("Undefined reference to " + identifier);
+    }
+
+    public static Loadable loadDescriptor(Searchable searchable, ProcessedProgram program) throws TranslationException {
+        Module module = searchable.getModule();
+        File file = program.getModule().remove(program.getFile());
+        if (module.isEmpty()) {
+            Loadable loadable = program.find(searchable);
+            if (loadable != null) {
+                return loadable;
+            }
+            for (Module m : program.getImports()) {
+                try {
+                    loadable = loadProgram(m.append(file)).find(searchable);
+                    if (loadable != null) {
+                        return loadable;
+                    }
+                } catch (ParseException | TranslationException | IOException e) {
+                    throw new TranslationException("Error while loading module " + m + ": " + e.getMessage());
+                }
+            }
+        } else {
+            try {
+                Loadable loadable = loadProgram(module.append(file)).find(searchable);
+                if (loadable != null) {
+                    return loadable;
+                }
+            } catch (FileNotFoundException | ParseException e) {
+                e.printStackTrace();
+            }
+        }
+        throw new TranslationException("Undefined reference to: " + searchable);
+    }
+
+    private static ProcessedProgram loadProgram(File file) throws FileNotFoundException, ParseException, TranslationException {
         if (loaded.containsKey(file)) {
             return loaded.get(file);
         }
-        new Parser(new BufferedReader(new FileReader(file)));
-        ProcessedProgram program = Parser.Program().process(file);
+        ProcessedProgram program = new Parser(new BufferedReader(new FileReader(file))).Program().process(file);
         String fileName = file.getName();
         if (!fileName.substring(0, fileName.length() - 4).equals(program.getModule().getValue())) {
             throw new TranslationException("Error in file " + file + ": module name must be equal to file name");
         }
         loaded.put(file, program);
         return program;
-    }
-
-    public static Descriptor loadDescriptor(Identifier identifier, ProcessedProgram program) throws TranslationException {
-        Module module = identifier.getModule();
-        int x = module.getQualifier().getSize();
-        File file = program.getFile();
-        for (int i = 0; i < x; i++) {
-            file = file.getParentFile();
-        }
-        if (module.isEmpty()) {
-            if (program.getFunctions().containsKey(identifier)) {
-                return program.getFunctions().get(identifier);
-            }
-            for (Module m : program.getImports()) {
-                try {
-                    ProcessedProgram p = loadProgram(new File(file.getPath() + m.getFile()));
-                    if (p.getFunctions().containsKey(identifier)) {
-                        return p.getFunctions().get(identifier);
-                    }
-                } catch (ParseException | TranslationException | IOException e) {
-                    throw new TranslationException("Error while loading module: " + m);
-                }
-            }
-        } else {
-            try {
-                ProcessedProgram p = loadProgram(new File(file.getPath() + module.getFile()));
-                if (p.getFunctions().containsKey(identifier)) {
-                    return p.getFunctions().get(identifier);
-                }
-            } catch (FileNotFoundException | ParseException e) {
-                e.printStackTrace();
-            }
-        }
-        throw new TranslationException("Undefined reference to " + identifier);
-    }
-
-    public static TypeDescriptor loadDescriptor(Constructor constructor, ProcessedProgram program) throws TranslationException {
-        Module module = constructor.getModule();
-        int x = module.getQualifier().getSize();
-        File file = program.getFile();
-        for (int i = 0; i < x; i++) {
-            file = file.getParentFile();
-        }
-        if (module.isEmpty()) {
-            for (TypeDescriptor descriptor : program.getTypes().values()) {
-                if (descriptor.contains(constructor)) {
-                    return descriptor;
-                }
-            }
-            for (Module m : program.getImports()) {
-                try {
-                    ProcessedProgram p = loadProgram(new File(file.getPath() + m.getFile()));
-                    for (TypeDescriptor descriptor : p.getTypes().values()) {
-                        if (p.getFunctions().containsKey(constructor)) {
-                            return descriptor;
-                        }
-                    }
-                } catch (ParseException | TranslationException | IOException e) {
-                    throw new TranslationException("Error while loading module: " + m);
-                }
-            }
-        } else {
-            try {
-                ProcessedProgram p = loadProgram(new File(file.getPath() + module.getFile()));
-                for (TypeDescriptor descriptor : p.getTypes().values()) {
-                    if (p.getFunctions().containsKey(constructor)) {
-                        return descriptor;
-                    }
-                }
-            } catch (FileNotFoundException | ParseException e) {
-                e.printStackTrace();
-            }
-        }
-        throw new TranslationException("Undefined reference to " + constructor);
     }
 }

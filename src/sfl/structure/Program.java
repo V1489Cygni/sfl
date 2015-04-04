@@ -53,12 +53,6 @@ public class Program {
                 throw new AssertionError();
             }
         }
-        for (Descriptor descriptor : functions.values()) {
-            descriptor.process();
-        }
-        for (TypeDescriptor descriptor : types.values()) {
-            descriptor.process();
-        }
         return new ProcessedProgram(file, module, imports, functions, types);
     }
 }

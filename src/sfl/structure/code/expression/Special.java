@@ -17,12 +17,12 @@ public enum Special implements Expression {
 
     @Override
     public Type getType(Map<Identifier, Type> context, ProcessedProgram program) throws TranslationException {
-        throw new TranslationException("Incorrect expression");
+        throw new TranslationException("Incorrect special expression: " + this);
     }
 
     @Override
     public void getContext(List<String> constraints, Map<Identifier, String> codes, Map<Identifier, Type> context, String myCode, ProcessedProgram program, Type myType) throws TranslationException {
-        throw new TranslationException("Special functions are not allowed here");
+        throw new TranslationException("Functions are not allowed in match cases: " + this);
     }
 
     @Override

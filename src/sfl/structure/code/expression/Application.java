@@ -12,6 +12,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static sfl.structure.type.BaseType.Boolean;
+import static sfl.structure.type.BaseType.Character;
+import static sfl.structure.type.BaseType.Integer;
+import static sfl.structure.type.BaseType.String;
+
 public class Application implements Expression {
     private List<Expression> arguments;
 
@@ -42,39 +47,42 @@ public class Application implements Expression {
         if (arguments.get(0) instanceof Special) {
             Expression op = arguments.get(0);
             if (arguments.size() != 3) {
-                if (arguments.size() == 2 && op.equals(Special.Not) && arguments.get(1).getType(context, program).equals(BaseType.Boolean)) {
-                    return BaseType.Boolean;
+                if (arguments.size() == 2 && op.equals(Special.Not) && arguments.get(1).getType(context, program).equals(Boolean)) {
+                    return Boolean;
                 }
-                throw new TranslationException("Incorrect expression");
+                throw new TranslationException("Incorrect expression: " + this);
             }
             Type t1 = arguments.get(1).getType(context, program), t2 = arguments.get(2).getType(context, program);
             if (op.equals(Special.Sub) || op.equals(Special.Mul) || op.equals(Special.Div) || op.equals(Special.Mod)) {
-                if (t1.equals(t2) && (t1.equals(BaseType.Character) || t1.equals(BaseType.Integer))) {
+                if (t1.equals(t2) && (t1.equals(Character) || t1.equals(Integer))) {
                     return t1;
                 }
             }
-            if (op.equals(Special.Add) && t1.equals(t2) && (t1.equals(BaseType.Character) || t1.equals(BaseType.Integer) || t1.equals(BaseType.String))) {
+            if (op.equals(Special.Add) && t1.equals(t2) && (t1.equals(Character) || t1.equals(Integer) || t1.equals(String))) {
                 return t1;
             }
+            if (op.equals(Special.Add) && (t1.equals(String) || t2.equals(String))) {
+                return String;
+            }
             if (op.equals(Special.Eq) && t1.equals(t2)) {
-                return BaseType.Boolean;
+                return Boolean;
             }
             if (op.equals(Special.Ls) || op.equals(Special.Gr) || op.equals(Special.Lse) || op.equals(Special.Gre)) {
-                if (t1.equals(t2) && (t1.equals(BaseType.Character) || t1.equals(BaseType.Integer))) {
-                    return BaseType.Boolean;
+                if (t1.equals(t2) && (t1.equals(Character) || t1.equals(Integer))) {
+                    return Boolean;
                 }
             }
-            if (op.equals(Special.At) && t1.equals(BaseType.String) && t2.equals(BaseType.Integer)) {
-                return BaseType.Character;
+            if (op.equals(Special.At) && t1.equals(String) && t2.equals(Integer)) {
+                return Character;
             }
-            throw new TranslationException("Incorrect expression");
+            throw new TranslationException("Incorrect expression: " + this);
         }
         Type t = arguments.get(0).getType(context, program);
         for (int i = 1; i < arguments.size(); i++) {
             if (t instanceof Implication) {
-                t = ((Implication) t).apply(arguments.get(i).getType(context, program));
+                t = ((Implication) t).apply(arguments.get(i).getType(context, program), this.toString());
             } else {
-                throw new TranslationException("Trying to apply argument to a non function expression");
+                throw new TranslationException("Trying to apply argument to a non function expression: " + this);
             }
         }
         return t;
@@ -87,14 +95,17 @@ public class Application implements Expression {
             arguments.get(0).getContext(constraints, codes, context, myCode, program, t);
             for (int i = 1; i < arguments.size(); i++) {
                 if (t instanceof Implication) {
-                    arguments.get(i).getContext(constraints, codes, context, "((" + arguments.get(0) + ") " + myCode + ").args.get(" + (i - 1) + ")", program, ((Implication) t).getArguments().get(0));
-                    t = ((Implication) t).apply(((Implication) t).getArguments().get(0));
+                    arguments.get(i).getContext(constraints, codes, context, "((" + arguments.get(0) + ") " + myCode + ").args.get(" + (i - 1) + ")", program, ((Implication) t).head());
+                    t = ((Implication) t).tail();
                 } else {
-                    throw new TranslationException("Trying to apply argument to a non function expression");
+                    throw new TranslationException("Trying to apply argument to a non function expression: " + this);
                 }
             }
+            if (!myType.equals(t)) {
+                throw new TranslationException("Failed to unify types " + t + " and " + myType + " in " + this);
+            }
         } else {
-            throw new TranslationException("Incorrect expression");
+            throw new TranslationException("Incorrect expression: " + this);
         }
     }
 
@@ -105,55 +116,59 @@ public class Application implements Expression {
             if (arguments.size() != 3) {
                 return "!((boolean) " + arguments.get(1).generate(codes, context, program) + ")";
             }
-            Type t1 = arguments.get(1).getType(context, program);
+            Type t1 = arguments.get(1).getType(context, program), t2 = arguments.get(2).getType(context, program);
             if (op.equals(Special.Sub) || op.equals(Special.Mul) || op.equals(Special.Div) || op.equals(Special.Mod)) {
-                if (t1.equals(BaseType.Character)) {
+                if (t1.equals(Character)) {
                     return "((char) " + arguments.get(1).generate(codes, context, program) + ") " +
                             op.generate(codes, context, program) + " ((char) " + arguments.get(2).generate(codes, context, program) + ")";
                 }
-                if (t1.equals(BaseType.Integer)) {
+                if (t1.equals(Integer)) {
                     return "((int) " + arguments.get(1).generate(codes, context, program) + ") " +
                             op.generate(codes, context, program) + " ((int) " + arguments.get(2).generate(codes, context, program) + ")";
                 }
             }
-            if (op.equals(Special.Add)) {
-                if (t1.equals(BaseType.Character)) {
+            if (op.equals(Special.Add) && t1.equals(t2)) {
+                if (t1.equals(Character)) {
                     return "((char) " + arguments.get(1).generate(codes, context, program) + ") + ((char) " +
                             arguments.get(2).generate(codes, context, program) + ")";
                 }
-                if (t1.equals(BaseType.Integer)) {
+                if (t1.equals(Integer)) {
                     return "((int) " + arguments.get(1).generate(codes, context, program) + ") + ((int) " +
                             arguments.get(2).generate(codes, context, program) + ")";
                 }
-                if (t1.equals(BaseType.String)) {
+                if (t1.equals(String)) {
                     return "((String) " + arguments.get(1).generate(codes, context, program) + ") + ((String) " +
                             arguments.get(2).generate(codes, context, program) + ")";
                 }
             }
+            if (op.equals(Special.Add) && (t1.equals(String) || t2.equals(String))) {
+                return "((" + typeName((BaseType) t1) + ") " + arguments.get(1).generate(codes, context, program) +
+                        ") + ((" + typeName((BaseType) t2) + ") " + arguments.get(2).generate(codes, context, program) + ")";
+            }
             if (op.equals(Special.Eq)) {
-                if (t1.equals(BaseType.Boolean)) {
+                if (t1.equals(Boolean)) {
                     return "((boolean) " + arguments.get(1).generate(codes, context, program) + ") == ((boolean) " +
                             arguments.get(2).generate(codes, context, program) + ")";
                 }
-                if (t1.equals(BaseType.Character)) {
+                if (t1.equals(Character)) {
                     return "((char) " + arguments.get(1).generate(codes, context, program) + ") == ((char) " +
                             arguments.get(2).generate(codes, context, program) + ")";
                 }
-                if (t1.equals(BaseType.Integer)) {
+                if (t1.equals(Integer)) {
                     return "((int) " + arguments.get(1).generate(codes, context, program) + ") == ((int) " +
                             arguments.get(2).generate(codes, context, program) + ")";
                 }
-                if (t1.equals(BaseType.String)) {
+                if (t1.equals(String)) {
                     return "((String) " + arguments.get(1).generate(codes, context, program) + ").equals((String) " +
                             arguments.get(2).generate(codes, context, program) + ")";
                 }
             }
             if (op.equals(Special.Ls) || op.equals(Special.Gr) || op.equals(Special.Lse) || op.equals(Special.Gre)) {
-                if (t1.equals(BaseType.Character)) {
+                if (t1.equals(Character)) {
                     return "((char) " + arguments.get(1).generate(codes, context, program) + ") " +
                             generate(codes, context, program) + " ((char) " + arguments.get(2).generate(codes, context, program) + ")";
                 }
-                if (t1.equals(BaseType.Integer)) {
+                if (t1.equals(Integer)) {
                     return "((int) " + arguments.get(1).generate(codes, context, program) + ") " +
                             generate(codes, context, program) + " ((int) " + arguments.get(2).generate(codes, context, program) + ")";
                 }
@@ -162,7 +177,7 @@ public class Application implements Expression {
                 return "((String) " + arguments.get(1).generate(codes, context, program) + ").charAt((int) " +
                         arguments.get(2).generate(codes, context, program) + ")";
             }
-            throw new TranslationException("Incorrect expression");
+            throw new TranslationException("Incorrect expression: " + this);
         }
         if (arguments.get(0) instanceof Constructor) {
             String result = "new " + arguments.get(0) + "(";
@@ -172,7 +187,7 @@ public class Application implements Expression {
             return result + arguments.get(arguments.size() - 1).generate(codes, context, program) + ")";
         }
         if (arguments.get(0) instanceof Identifier && !codes.containsKey(arguments.get(0))) {
-            Descriptor d = Main.loadDescriptor((Identifier) arguments.get(0), program);
+            Descriptor d = (Descriptor) Main.loadDescriptor((Identifier) arguments.get(0), program);
             if (arguments.size() > d.getArgsNumber()) {
                 String result = arguments.get(0) + "(";
                 for (int i = 1; i < d.getArgsNumber(); i++) {
@@ -196,6 +211,20 @@ public class Application implements Expression {
             result = "((Function) " + result + ").apply(" + arguments.get(i).generate(codes, context, program) + ")";
         }
         return result;
+    }
+
+    private String typeName(BaseType t) {
+        switch (t) {
+            case Integer:
+                return "int";
+            case Boolean:
+                return "boolean";
+            case Character:
+                return "char";
+            case String:
+                return "String";
+        }
+        throw new AssertionError();
     }
 
     @Override

@@ -1,0 +1,28 @@
+module Data.List
+
+data List = Empty | Cons Integer List
+
+put :: Integer -> List -> List
+put a b = Cons a b
+
+top :: List -> Integer
+top (Cons a b) = a
+
+get :: List -> Integer -> Integer
+get (Cons a b) 0 = a
+get (Cons a b) n = get b (- n 1)
+
+remove :: List -> List
+remove (Cons a b) = b
+
+map :: (Integer -> Integer) -> List -> List
+map f Empty = Empty
+map f (Cons a b) = Cons (f a) (map f b)
+
+strImpl :: List -> Boolean -> String
+strImpl Empty a = ">"
+strImpl (Cons a b) true = + (+ ", " a) (strImpl b true)
+strImpl (Cons a b) false = + a (strImpl b true)
+
+str :: List -> String
+str a = + "<" (strImpl a false)

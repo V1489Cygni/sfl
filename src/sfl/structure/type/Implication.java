@@ -1,5 +1,6 @@
 package sfl.structure.type;
 
+import sfl.translator.ProcessedProgram;
 import sfl.translator.TranslationException;
 
 import java.util.List;
@@ -11,31 +12,51 @@ public class Implication implements Type {
         this.arguments = arguments;
     }
 
-    public List<Type> getArguments() {
-        return arguments;
+    public Type head() {
+        return arguments.get(0);
     }
 
-    public Type apply(Type t) throws TranslationException {
+    public Type apply(Type t, String errorPlace) throws TranslationException {
         if (t.equals(arguments.get(0))) {
             if (arguments.size() == 2) {
                 return arguments.get(1);
             }
             return new Implication(arguments.subList(1, arguments.size()));
         }
-        throw new TranslationException("Wrong type");
+        throw new TranslationException("Failed to unify types " + t + " and " + arguments.get(0) + " in " + errorPlace);
+    }
+
+    public Type tail() {
+        if (arguments.size() == 2) {
+            return arguments.get(1);
+        }
+        return new Implication(arguments.subList(1, arguments.size()));
     }
 
     @Override
-    public Type process() {
+    public Type process(ProcessedProgram program) throws TranslationException {
         while (arguments.get(arguments.size() - 1) instanceof Implication) {
             for (int i = 1; i < ((Implication) arguments.get(arguments.size() - 1)).arguments.size(); i++) {
                 arguments.add(((Implication) arguments.get(arguments.size() - 1)).arguments.get(i));
             }
         }
         for (int i = 0; i < arguments.size(); i++) {
-            arguments.set(i, arguments.get(i).process());
+            arguments.set(i, arguments.get(i).process(program));
+        }
+        if (arguments.size() == 1) {
+            return arguments.get(0);
         }
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o instanceof Implication && arguments.equals(((Implication) o).arguments);
+    }
+
+    @Override
+    public int hashCode() {
+        return arguments.hashCode();
     }
 
     @Override

@@ -1,6 +1,9 @@
 package sfl.structure.type;
 
+import sfl.Main;
 import sfl.structure.code.Module;
+import sfl.translator.ProcessedProgram;
+import sfl.translator.TranslationException;
 
 public class TypeIdentifier implements Type {
     private Module module;
@@ -12,22 +15,29 @@ public class TypeIdentifier implements Type {
     }
 
     @Override
-    public Type process() {
+    public Type process(ProcessedProgram program) throws TranslationException {
+        if (module.isEmpty()) {
+            module = Main.findModule(this, program);
+        }
         return this;
+    }
+
+    public boolean valueEquals(TypeIdentifier identifier) {
+        return value.equals(identifier.value);
     }
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof TypeIdentifier && value.equals(((TypeIdentifier) o).value);
+        return o instanceof TypeIdentifier && value.equals(((TypeIdentifier) o).value) && module.equals(((TypeIdentifier) o).module);
     }
 
     @Override
     public int hashCode() {
-        return value.hashCode();
+        return value.hashCode() + module.hashCode();
     }
 
     @Override
     public String toString() {
-        return value;
+        return (module.isEmpty() ? "" : module + ".") + value;
     }
 }

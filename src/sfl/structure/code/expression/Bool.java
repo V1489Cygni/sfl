@@ -28,9 +28,9 @@ public class Bool implements Expression {
     @Override
     public void getContext(List<String> constraints, Map<Identifier, String> codes, Map<Identifier, Type> context, String myCode, ProcessedProgram program, Type myType) throws TranslationException {
         if (!myType.equals(BaseType.Boolean)) {
-            throw new TranslationException("Wrong type");
+            throw new TranslationException("Failed to unify types " + myType + " and " + BaseType.Integer);
         }
-        constraints.add("((bool) " + myCode + ") == " + value);
+        constraints.add("((boolean) " + myCode + ") == " + value);
     }
 
     @Override

@@ -1,19 +1,20 @@
 module Test
 
-data List = Empty | Cons Int List
+import Data.List
 
-put :: Int -> List -> List
-put a b = Cons a b
+fib :: Integer -> Integer
+fib 0 = 1
+fib 1 = 1
+fib n = + (fib (- n 1)) (fib (- n 2))
 
-top :: List -> Int
-top (Cons a b) = a
+div :: Integer -> Integer -> Integer
+div a b = / a b
 
-get :: List -> Int -> Int
-get (Cons a b) 0 = a
-get (Cons a b) n = get b (- n 1)
+swap :: (Integer -> Integer -> Integer) -> Integer -> Integer -> Integer
+swap f a b = f b a
 
-remove :: List -> List
-remove (Cons a b) = b
+list :: List
+list = map (swap div 10) (put (fib 30) (put 20 Empty))
 
-main :: Int
-main = get (put 3 (remove (put 2 (put 7 (put 1 Empty))))) 1
+main :: String
+main = + "Result: " (str list)
