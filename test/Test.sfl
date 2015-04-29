@@ -10,11 +10,20 @@ fib n = + (fib (- n 1)) (fib (- n 2))
 div :: Integer -> Integer -> Integer
 div a b = / a b
 
-swap :: (Integer -> Integer -> Integer) -> Integer -> Integer -> Integer
-swap f a b = f b a
+flip :: (Integer -> Integer -> Integer) -> Integer -> Integer -> Integer
+flip f a b = f b a
 
 list :: List
-list = map (swap div 10) (put (fib 30) (put 20 Empty))
+list = map (flip div 10) (put (fib 8) (put 39 (put 50 Empty)))
+
+tmp :: Integer -> Integer
+tmp n = + 5 (fib n)
+
+fl :: FList
+fl = FCons (fib) (FCons tmp FEmpty)
+
+nList :: List
+nList = apply fl list
 
 main :: String
-main = + "Result: " (str list)
+main = + "Result: " (str nList)

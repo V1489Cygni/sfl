@@ -2,6 +2,39 @@
 package data;
 import sfl.util.Function;
 public class List {
+public static class FEmpty implements Function {
+public java.util.List<Object> args = new java.util.ArrayList<>();
+public FEmpty() {
+}
+public FEmpty(FEmpty f) {
+args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
+}
+public Object _apply_(Object o) {
+FEmpty f = new FEmpty(this);
+f.args.add(o);
+return f;
+}
+}
+public static class FCons implements Function {
+public java.util.List<Object> args = new java.util.ArrayList<>();
+public FCons() {
+}
+public FCons(Object arg0) {
+args.add(arg0);
+}
+public FCons(Object arg0, Object arg1) {
+args.add(arg0);
+args.add(arg1);
+}
+public FCons(FCons f) {
+args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
+}
+public Object _apply_(Object o) {
+FCons f = new FCons(this);
+f.args.add(o);
+return f;
+}
+}
 public static class Empty implements Function {
 public java.util.List<Object> args = new java.util.ArrayList<>();
 public Empty() {
@@ -9,7 +42,7 @@ public Empty() {
 public Empty(Empty f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 Empty f = new Empty(this);
 f.args.add(o);
 return f;
@@ -29,7 +62,7 @@ args.add(arg1);
 public Cons(Cons f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 Cons f = new Cons(this);
 f.args.add(o);
 return f;
@@ -42,7 +75,7 @@ public str() {
 public str(str f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 if (args.size() < 0) {
 str f = new str(this);
 f.args.add(o);
@@ -67,7 +100,7 @@ public top() {
 public top(top f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 if (args.size() < 0) {
 top f = new top(this);
 f.args.add(o);
@@ -85,6 +118,40 @@ return ((Cons) arg0).args.get(0);
 }
 throw new AssertionError();
 }
+public static class apply implements Function {
+public java.util.List<Object> args = new java.util.ArrayList<>();
+public apply() {
+}
+public apply(Object arg0) {
+args.add(arg0);
+}
+public apply(apply f) {
+args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
+}
+public Object _apply_(Object o) {
+if (args.size() < 1) {
+apply f = new apply(this);
+f.args.add(o);
+return f;
+}
+if (true && args.get(0) instanceof FCons && o instanceof Cons) {
+return new Cons(((Function) ((FCons) args.get(0)).args.get(0))._apply_(((Cons) o).args.get(0)), apply(((FCons) args.get(0)).args.get(1), ((Cons) o).args.get(1)));
+}
+if (true) {
+return new Empty();
+}
+throw new AssertionError();
+}
+}
+public static Object apply(Object arg0, Object arg1) {
+if (true && arg0 instanceof FCons && arg1 instanceof Cons) {
+return new Cons(((Function) ((FCons) arg0).args.get(0))._apply_(((Cons) arg1).args.get(0)), apply(((FCons) arg0).args.get(1), ((Cons) arg1).args.get(1)));
+}
+if (true) {
+return new Empty();
+}
+throw new AssertionError();
+}
 public static class get implements Function {
 public java.util.List<Object> args = new java.util.ArrayList<>();
 public get() {
@@ -95,7 +162,7 @@ args.add(arg0);
 public get(get f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 if (args.size() < 1) {
 get f = new get(this);
 f.args.add(o);
@@ -129,7 +196,7 @@ args.add(arg0);
 public strImpl(strImpl f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 if (args.size() < 1) {
 strImpl f = new strImpl(this);
 f.args.add(o);
@@ -169,7 +236,7 @@ args.add(arg0);
 public map(map f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 if (args.size() < 1) {
 map f = new map(this);
 f.args.add(o);
@@ -179,7 +246,7 @@ if (true && o instanceof Empty) {
 return new Empty();
 }
 if (true && o instanceof Cons) {
-return new Cons(((Function) args.get(0)).apply(((Cons) o).args.get(0)), map(args.get(0), ((Cons) o).args.get(1)));
+return new Cons(((Function) args.get(0))._apply_(((Cons) o).args.get(0)), map(args.get(0), ((Cons) o).args.get(1)));
 }
 throw new AssertionError();
 }
@@ -189,7 +256,7 @@ if (true && arg1 instanceof Empty) {
 return new Empty();
 }
 if (true && arg1 instanceof Cons) {
-return new Cons(((Function) arg0).apply(((Cons) arg1).args.get(0)), map(arg0, ((Cons) arg1).args.get(1)));
+return new Cons(((Function) arg0)._apply_(((Cons) arg1).args.get(0)), map(arg0, ((Cons) arg1).args.get(1)));
 }
 throw new AssertionError();
 }
@@ -203,7 +270,7 @@ args.add(arg0);
 public put(put f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 if (args.size() < 1) {
 put f = new put(this);
 f.args.add(o);
@@ -228,7 +295,7 @@ public remove() {
 public remove(remove f) {
 args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));
 }
-public Object apply(Object o) {
+public Object _apply_(Object o) {
 if (args.size() < 0) {
 remove f = new remove(this);
 f.args.add(o);

@@ -36,8 +36,9 @@ public class Implication implements Type {
     @Override
     public Type process(ProcessedProgram program) throws TranslationException {
         while (arguments.get(arguments.size() - 1) instanceof Implication) {
-            for (int i = 1; i < ((Implication) arguments.get(arguments.size() - 1)).arguments.size(); i++) {
-                arguments.add(((Implication) arguments.get(arguments.size() - 1)).arguments.get(i));
+            Implication im = (Implication) arguments.remove(arguments.size() - 1);
+            for (int i = 0; i < im.arguments.size(); i++) {
+                arguments.add(im.arguments.get(i));
             }
         }
         for (int i = 0; i < arguments.size(); i++) {

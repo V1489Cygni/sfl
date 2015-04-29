@@ -78,7 +78,7 @@ public class Descriptor implements Loadable {
             result += "public " + name + "(" + name + " f) {\n" +
                     "args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));\n" +
                     "}\n" +
-                    "public Object apply(Object o) {\n" +
+                    "public Object _apply_(Object o) {\n" +
                     "if (args.size() < " + (argsNumber - 1) + ") {\n" +
                     name + " f = new " + name + "(this);\n" +
                     "f.args.add(o);\n" +

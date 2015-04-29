@@ -1,5 +1,5 @@
 package sfl.util;
 
 public interface Function {
-    Object apply(Object o);
+    Object _apply_(Object o);
 }

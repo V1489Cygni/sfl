@@ -1,6 +1,5 @@
 package sfl.translator;
 
-import sfl.Main;
 import sfl.structure.code.expression.Constructor;
 import sfl.structure.type.Implication;
 import sfl.structure.type.Type;
@@ -35,9 +34,9 @@ public class TypeDescriptor implements Loadable {
 
     public void process(ProcessedProgram program) throws TranslationException {
         this.program = program;
-        for (int i = 0; i < arguments.size(); i++) {
-            for (int j = 0; j < arguments.get(i).size(); j++) {
-                arguments.get(i).set(j, arguments.get(i).get(j).process(program));
+        for (List<Type> argument : arguments) {
+            for (int j = 0; j < argument.size(); j++) {
+                argument.set(j, argument.get(j).process(program));
             }
         }
     }
@@ -69,7 +68,7 @@ public class TypeDescriptor implements Loadable {
             result += "public " + constructors.get(i) + "(" + constructors.get(i) + " f) {\n" +
                     "args.addAll(f.args.stream().collect(java.util.stream.Collectors.toList()));\n" +
                     "}\n" +
-                    "public Object apply(Object o) {\n" +
+                    "public Object _apply_(Object o) {\n" +
                     constructors.get(i) + " f = new " + constructors.get(i) + "(this);\n" +
                     "f.args.add(o);\n" +
                     "return f;\n" +

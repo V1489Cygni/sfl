@@ -1,5 +1,7 @@
 module Data.List
 
+data FList = FEmpty | FCons (Integer -> Integer) FList
+
 data List = Empty | Cons Integer List
 
 put :: Integer -> List -> List
@@ -18,6 +20,10 @@ remove (Cons a b) = b
 map :: (Integer -> Integer) -> List -> List
 map f Empty = Empty
 map f (Cons a b) = Cons (f a) (map f b)
+
+apply :: FList -> List -> List
+apply (FCons f fl) (Cons i il) = Cons (f i) (apply fl il)
+apply a b = Empty
 
 strImpl :: List -> Boolean -> String
 strImpl Empty a = ">"

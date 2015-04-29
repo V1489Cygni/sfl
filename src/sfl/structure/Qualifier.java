@@ -27,8 +27,8 @@ public class Qualifier {
 
     public String getPath() {
         String result = "";
-        for (int i = 0; i < qualifiers.size(); i++) {
-            result += "/" + qualifiers.get(i).toLowerCase();
+        for (String qualifier : qualifiers) {
+            result += "/" + qualifier.toLowerCase();
         }
         return result;
     }
@@ -54,8 +54,8 @@ public class Qualifier {
     @Override
     public String toString() {
         String result = "";
-        for (int i = 0; i < qualifiers.size(); i++) {
-            result += qualifiers.get(i) + ".";
+        for (String qualifier : qualifiers) {
+            result += qualifier + ".";
         }
         return result;
     }

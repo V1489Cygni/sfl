@@ -13,7 +13,7 @@ import java.util.Map;
 public class Main {
     private static Map<File, ProcessedProgram> loaded = new HashMap<>();
 
-    public static void main(String[] args) throws TranslationException {
+    public static void main(String[] args) {
         for (String fileName : args) {
             try {
                 if (fileName.length() < 5 || !fileName.substring(fileName.length() - 4).equals(".sfl")) {
@@ -24,7 +24,7 @@ public class Main {
                 writer.write(loadProgram(new File(fileName)).generate());
                 writer.flush();
                 writer.close();
-            } catch (ParseException | IOException e) {
+            } catch (ParseException | IOException | TranslationException e) {
                 System.err.println("Error while processing file " + fileName + ": " + e.getMessage());
             }
         }
@@ -79,7 +79,7 @@ public class Main {
                     return loadable;
                 }
             } catch (FileNotFoundException | ParseException e) {
-                e.printStackTrace();
+                throw new TranslationException("Error while loading module " + module + ": " + e.getMessage());
             }
         }
         throw new TranslationException("Undefined reference to: " + searchable);

@@ -195,7 +195,7 @@ public class Application implements Expression {
                 }
                 result += arguments.get(d.getArgsNumber()).generate(codes, context, program) + ")";
                 for (int i = d.getArgsNumber() + 1; i < arguments.size(); i++) {
-                    result += "((Function) " + result + ").apply(" + arguments.get(i).generate(codes, context, program) + ")";
+                    result += "((Function) " + result + ")._apply_(" + arguments.get(i).generate(codes, context, program) + ")";
                 }
                 return result;
             } else {
@@ -208,7 +208,7 @@ public class Application implements Expression {
         }
         String result = arguments.get(0).generate(codes, context, program);
         for (int i = 1; i < arguments.size(); i++) {
-            result = "((Function) " + result + ").apply(" + arguments.get(i).generate(codes, context, program) + ")";
+            result = "((Function) " + result + ")._apply_(" + arguments.get(i).generate(codes, context, program) + ")";
         }
         return result;
     }

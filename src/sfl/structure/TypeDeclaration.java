@@ -31,10 +31,9 @@ public class TypeDeclaration implements Statement {
 
     @Override
     public String toString() {
-        String result = name + " = ";
-        boolean first = true;
+        String result = name + " =";
         for (int i = 0; i < constructors.size(); i++) {
-            result += (first ? "" : " | ") + constructors.get(i);
+            result += (i == 0 ? "" : " |") + constructors.get(i);
             for (int j = 0; j < arguments.get(i).size(); j++) {
                 result += " " + arguments.get(i).get(j);
             }
