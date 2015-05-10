@@ -75,6 +75,9 @@ public class Application implements Expression {
             if (op.equals(Special.At) && t1.equals(String) && t2.equals(Integer)) {
                 return Character;
             }
+            if ((op.equals(Special.Or) || op.equals(Special.And)) && t1.equals(Boolean) && t2.equals(Boolean)) {
+                return Boolean;
+            }
             throw new TranslationException("Incorrect expression: " + this);
         }
         Type t = arguments.get(0).getType(context, program);
@@ -165,16 +168,24 @@ public class Application implements Expression {
             }
             if (op.equals(Special.Ls) || op.equals(Special.Gr) || op.equals(Special.Lse) || op.equals(Special.Gre)) {
                 if (t1.equals(Character)) {
-                    return "((char) " + arguments.get(1).generate(codes, context, program) + ") " +
+                    return "((char) (" + arguments.get(1).generate(codes, context, program) + ")) " +
                             generate(codes, context, program) + " ((char) " + arguments.get(2).generate(codes, context, program) + ")";
                 }
                 if (t1.equals(Integer)) {
-                    return "((int) " + arguments.get(1).generate(codes, context, program) + ") " +
+                    return "((int) (" + arguments.get(1).generate(codes, context, program) + ")) " +
                             generate(codes, context, program) + " ((int) " + arguments.get(2).generate(codes, context, program) + ")";
                 }
             }
             if (op.equals(Special.At)) {
                 return "((String) " + arguments.get(1).generate(codes, context, program) + ").charAt((int) " +
+                        arguments.get(2).generate(codes, context, program) + ")";
+            }
+            if (op.equals(Special.Or)  && t1.equals(Boolean) && t2.equals(Boolean)) {
+                return "((boolean) (" + arguments.get(1).generate(codes, context, program) + ")) || ((boolean) " +
+                        arguments.get(2).generate(codes, context, program) + ")";
+            }
+            if (op.equals(Special.And)  && t1.equals(Boolean) && t2.equals(Boolean)) {
+                return "((boolean) (" + arguments.get(1).generate(codes, context, program) + ")) && ((boolean) " +
                         arguments.get(2).generate(codes, context, program) + ")";
             }
             throw new TranslationException("Incorrect expression: " + this);

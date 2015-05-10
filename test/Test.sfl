@@ -25,5 +25,12 @@ fl = FCons (fib) (FCons tmp FEmpty)
 nList :: List
 nList = apply fl list
 
+isPrimeImpl :: Integer -> Integer -> Boolean
+isPrimeImpl n 1 = false
+isPrimeImpl n m = | (== (% n m) 0) (isPrimeImpl n (- m 1))
+
+isPrime :: Integer -> Boolean
+isPrime n = ! (isPrimeImpl n (- n 1))
+
 main :: String
 main = + "Result: " (str nList)
